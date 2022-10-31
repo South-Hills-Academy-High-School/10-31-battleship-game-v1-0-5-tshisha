@@ -38,6 +38,21 @@ function updatePX (whichPlayer: string) {
         }
     }
 }
+function placeAllCPUBoats () {
+    cpuPlaceBoat0()
+    cpuPlaceBoat1()
+    cpuPlaceBoat2()
+    currentBoat = 2
+    while (isOverlapping(boatSpriteArrayP2)) {
+        cpuPlaceBoat1()
+    }
+    currentBoat = 2
+    while (isOverlapping(boatSpriteArrayP2)) {
+        cpuPlaceBoat2()
+    }
+    moveBoatFlag += 1
+    currentBoat = 0
+}
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
     if (currentPlayer == "Player1") {
         rotateFlag = boatRotateArrayP1[currentBoat]
@@ -76,8 +91,31 @@ function isPlayerXWinner (enemyBoats: Sprite[][], hitOrMissPX: Sprite[]) {
     return killCount
 }
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-    cpuPlaceBoat0()
-    cpuPlaceBoat1()
+    if (moveBoatFlag == 3) {
+        if (currentPlayer == "Player1") {
+            isHitOrMiss(boatSpriteArrayP2, hitOrMissP1)
+            switchPlayer()
+        } else if (singlePlayerFlag == 1) {
+            game.splash("CPU Move")
+            grid.place(cursor, tiles.getTileLocation(randint(0, 9), randint(0, 6)))
+            isHitOrMiss(boatSpriteArrayP1, hitOrMissP2)
+            switchPlayer()
+        } else {
+            isHitOrMiss(boatSpriteArrayP1, hitOrMissP2)
+            switchPlayer()
+        }
+    } else {
+        currentBoat += 1
+        grid.place(cursor, tiles.getTileLocation(0, 0))
+        if (currentBoat == 3) {
+            currentBoat = 0
+            switchPlayer()
+            moveBoatFlag += 1
+            if (singlePlayerFlag == 1) {
+                switchPlayer()
+            }
+        }
+    }
 })
 controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
     rotateFlag = "nothing"
@@ -402,25 +440,6 @@ function cpuPlaceBoat1 () {
         grid.place(boatSpriteArrayP2[1][2], grid.add(grid.getLocation(cursor), 0, 2))
     }
 }
-controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (moveBoatFlag == 3) {
-        if (currentPlayer == "Player1") {
-            isHitOrMiss(boatSpriteArrayP2, hitOrMissP1)
-            switchPlayer()
-        } else {
-            isHitOrMiss(boatSpriteArrayP1, hitOrMissP2)
-            switchPlayer()
-        }
-    } else {
-        currentBoat += 1
-        grid.place(cursor, tiles.getTileLocation(0, 0))
-        if (currentBoat == 3) {
-            currentBoat = 0
-            switchPlayer()
-            moveBoatFlag += 1
-        }
-    }
-})
 function initP2 () {
     hitOrMissP2 = [sprites.create(img`
         . . . . . . . . . . . . . . . . 
@@ -609,6 +628,22 @@ function makeBoatInvisible (boatArray: Sprite[]) {
         currentBoatSprite.setFlag(SpriteFlag.Invisible, true)
     }
 }
+function cpuPlaceBoat2 () {
+    makeBoatVisible(boatSpriteArrayP2[2])
+    if (randint(0, 1) == 0) {
+        grid.place(cursor, tiles.getTileLocation(randint(0, 6), randint(0, 6)))
+        grid.place(boatSpriteArrayP2[2][0], grid.add(grid.getLocation(cursor), 0, 0))
+        grid.place(boatSpriteArrayP2[2][1], grid.add(grid.getLocation(cursor), 1, 0))
+        grid.place(boatSpriteArrayP2[2][2], grid.add(grid.getLocation(cursor), 2, 0))
+        grid.place(boatSpriteArrayP2[2][3], grid.add(grid.getLocation(cursor), 3, 0))
+    } else {
+        grid.place(cursor, tiles.getTileLocation(randint(0, 9), randint(0, 3)))
+        grid.place(boatSpriteArrayP2[2][0], grid.add(grid.getLocation(cursor), 0, 0))
+        grid.place(boatSpriteArrayP2[2][1], grid.add(grid.getLocation(cursor), 0, 1))
+        grid.place(boatSpriteArrayP2[2][2], grid.add(grid.getLocation(cursor), 0, 2))
+        grid.place(boatSpriteArrayP2[2][3], grid.add(grid.getLocation(cursor), 0, 3))
+    }
+}
 function turnBoat (boatNum: number, boatRotateArray: string[]) {
     if (boatRotateArray[boatNum] == "up") {
         boatRotateArray[boatNum] = "sideways"
@@ -644,7 +679,9 @@ let moveBoatFlag = 0
 let currentBoat = 0
 let rotateFlag = ""
 let currentPlayer = ""
+let singlePlayerFlag = 0
 tiles.setCurrentTilemap(tilemap`level1`)
+singlePlayerFlag = 1
 currentPlayer = "Player1"
 initP1()
 initP2()
@@ -697,6 +734,9 @@ shadowCursor = sprites.create(img`
     `, SpriteKind.Cursor)
 grid.snap(cursor)
 grid.snap(shadowCursor)
+if (singlePlayerFlag == 1) {
+    placeAllCPUBoats()
+}
 game.onUpdate(function () {
 	
 })
